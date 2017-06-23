@@ -26,7 +26,7 @@ Response: In this model, the kinematic model of the vehicle is utilised. Therefo
 
 In terms of the actuators, there are essentially 3 actuators - however the throttle and break are treated as a single actuator, with the positive and negative value indicating acceleration and deceleration respectively `acc` , and the other actuator is the steering angle `delta`.
 
-The update equations allow for the state and actuators at time=t, to predict the state of the vehicle at the next time=(t+1). In addition, the cross-track error `cte` and orientation error `epsi` are also included in the update step. The general update equations are found in `FG_eval` class in `MPC.cpp` lines , and the core update equations are as follows:
+The update equations allow for the state and actuators at time=t, to predict the state of the vehicle at the next time=(t+1). In addition, the cross-track error `cte` and orientation error `epsi` are also included in the update step. The general update equations are found in `FG_eval` class in `MPC.cpp` lines 107-113, and the core update equations are as follows:
 * `px(t+1) = px(t) + v(t) * cos(psi(t)) * dt`
 * `py(t+1) = py(t) + v(t) * sin(psi(t)) * dt`
 * `psi(t+1) = psi + v / Lf * delta * dt`
@@ -34,25 +34,32 @@ The update equations allow for the state and actuators at time=t, to predict the
 * `cte(t+1) = cte(t) + v(t) * sin(desired_psi(t) * dt`
 * `desired_psi(t+1) = desired_psi(t) + v(t) / Lf * delta * dt`
 
-where Lf is the distance between the front of the vehicle and its centre of gravity.
+where `Lf` is the distance between the front of the vehicle and its centre of gravity.
 
 * Criteria: Timestep length `N` and elapsed duration `dt`, and the reasoning behind the variable choices should be discussed, as well as previous attempted values.
+
 Response: Without any latency considerations, I could set `dt` = 0.05s and `N` = 20, and achieve good results for a speed of 60mph. However, introducing latency resulted in having to increase `dt` to 0.15s and decrease `N` to 8 - I also had to reduce the reference speed to 35mph, to avoid oscillations - even when considering the update to the state equations to include latency.
 
 * Criteria: Polynominal fitting and MPC preprocessing should be discussed.
-Response:
+
+Response: At each time step, the waypoints of the desired vehicle path trajectory are converted from global coordinates to vehicle coordinates by the function `transformWaypoints`. The coefficients of a 3rd order polynomial line are then estimated based on the transformed waypoints using `polyfit`, and then the cross-track error is calculated using `polyeval` and orientation error is calculated based on the derivative of the 3rd order coefficients, and the associated `px` position. These values are then passed as a state vector to MPC.
 
 * Criteria: Model predictive control with latency should include 100ms latency and details on how this was dealt with.
-Response:
+
+Response: To incorporate latency, I included some preprocessing steps before the waypoint transformation. I read in the steering_angle and the throttle, and assumed that the acceleration is equal to the throttle. Essentially, the preprocessing utilises the latency time of 100ms, to predict the vehicle position, heading and speed after the latency period. The preprocessing is done in `main.cpp` lines 118 - 120. The update equations that I included for latency are as follows:
+* `px(t+0.1) = px(t) + v(t) * cos(psi(t)) * latency`
+* `py(t+0.1) = py(t) + v(t) * sin(psi(t)) * latency`
+* `psi(t+0.1) = psi - v / Lf * delta * latency, (included negative sign for simulator left/right sign convention)`
+* `v(t+0.1) =  v(t) + acc(t) * latency`
 
 ### Simulation
 * Criteria: The vehicle must successfully drive a lap around the track.
-Response: 
 
+Response: The vehicle successfully drives around the track.
 
 ---
 
-## Dependencies
+## Dependencies (Based on original Git fork)
 
 * cmake >= 3.5
  * All OSes: [click here for installation instructions](https://cmake.org/install/)
@@ -89,76 +96,3 @@ Response:
 * [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page). This is already part of the repo so you shouldn't have to worry about it.
 * Simulator. You can download these from the [releases tab](https://github.com/udacity/self-driving-car-sim/releases).
 * Not a dependency but read the [DATA.md](./DATA.md) for a description of the data sent back from the simulator.
-
-
-## Basic Build Instructions
-
-
-1. Clone this repo.
-2. Make a build directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./mpc`.
-
-## Tips
-
-1. It's recommended to test the MPC on basic examples to see if your implementation behaves as desired. One possible example
-is the vehicle starting offset of a straight line (reference). If the MPC implementation is correct, after some number of timesteps
-(not too many) it should find and track the reference line.
-2. The `lake_track_waypoints.csv` file has the waypoints of the lake track. You could use this to fit polynomials and points and see of how well your model tracks curve. NOTE: This file might be not completely in sync with the simulator so your solution should NOT depend on it.
-3. For visualization this C++ [matplotlib wrapper](https://github.com/lava/matplotlib-cpp) could be helpful.
-
-## Editor Settings
-
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
-
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
-
-## Code Style
-
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
-
-## Project Instructions and Rubric
-
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
-
-More information is only accessible by people who are already enrolled in Term 2
-of CarND. If you are enrolled, see [the project page](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/f1820894-8322-4bb3-81aa-b26b3c6dcbaf/lessons/b1ff3be0-c904-438e-aad3-2b5379f0e0c3/concepts/1a2255a0-e23c-44cf-8d41-39b8a3c8264a)
-for instructions and the project rubric.
-
-## Hints!
-
-* You don't have to follow this directory structure, but if you do, your work
-  will span all of the .cpp files here. Keep an eye out for TODOs.
-
-## Call for IDE Profiles Pull Requests
-
-Help your fellow students!
-
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to we ensure
-that students don't feel pressured to use one IDE or another.
-
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
-
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
-
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
-
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
-
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
