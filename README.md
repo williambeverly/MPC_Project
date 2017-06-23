@@ -1,6 +1,48 @@
 # Model Predictive Control
-Udacity Self driving car - Term 2: Project 5
+## Udacity Self-driving car nanodegree - Term 2: Project 5
 
+A script titled `ez-build.sh` is included in the repository for compilation and testing. Alternatively, the user may enter the following commands:
+* `mkdir build && cd build`
+* `cmake .. && make`
+* `./mpc`
+
+Once built, the Udacity Simulator v1.45 was utilised.
+
+## Response to rubric requirements
+### Compiling
+* Requirement: Code should compile without errors with `cmake` and `make`
+* Response: Code compiles without error, as testing with the minimum dependancy requirements.
+
+### Implementation
+* Criteria: The model should be described in detail, including state, actuators and update equations.
+
+Response: In this model, the kinematic model of the vehicle is utilised. Therefore, this model ignores the tire forces, gravity and mass that a dynamic model would utilise. Therefore, there are four states for the kinematic model: x-position `px`, y-position `py`, vehicle velocity angle `psi` and vehicle velocity `v`. 
+
+In terms of the actuators, there are essentially 3 actuators - however the throttle and break are treated as a single actuator, with the positive and negative value indicating acceleration and deceleration respectively `acc` , and the other actuator is the steering angle `delta`.
+
+The update equations allow for the state and actuators at time=t, to predict the state of the vehicle at the next time=(t+1). The general update equations are found in `FG_eval` class in `MPC.cpp` lines , and the core update equations are as follows:
+* `px(t+1) = px(t) + v(t) * cos(psi(t)) * dt`
+* `py(t+1) = py(t) + v(t) * sin(psi(t)) * dt`
+* `psi(t+1) = psi + v / Lf * delta * dt`
+* `v(t+1) =  v(t) + acc(t) * dt`
+
+where Lf is the distance between the front of the vehicle and its centre of gravity.
+
+In addition, the cross-track error and the actual trajectory are included in the update step, and modelled as follows:
+
+
+* Criteria: Timestep length `N` and elapsed duration `dt`, and the reasoning behind the variable choices should be discussed, as well as previous attempted values.
+Response: Without any latency considerations, I could set `dt` = 0.05s and `N` = 20, and achieve good results for a speed of 60mph. However, introducing latency resulted in having to increase `dt` to 0.15s and decrease `N` to 8 - I also had to reduce the reference speed to 35mph, to avoid oscillations - even when considering the update to the state equations to include latency.
+
+* Criteria: Polynominal fitting and MPC preprocessing should be discussed.
+Response:
+
+* Criteria: Model predictive control with latency should include 100ms latency and details on how this was dealt with.
+Response:
+
+### Simulation
+* Criteria: The vehicle must successfully drive a lap around the track.
+Response: 
 
 
 ---
