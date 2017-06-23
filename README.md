@@ -1,6 +1,8 @@
 # Model Predictive Control
 ## Term 2: Project 5 - Udacity Self-driving car nanodegree
 
+![Alt text](Images/Display.png)
+
 ## Project description
 
 The project implements a Model Predictive Controller (MPC) to guide a vehicle around a track - which is achieved in a simulator. At each simulator time step, the simulator provides the vehicle position, speed and heading to the MPC controller. Within the MPC, a kinematic model of the vehicle utilises the provided parameters as states, that are dependent on actuators (such as acceleration and steering angle), to predict the future states that are within a prediction horizon. In essence, the states and actuators are classed as design variables, and a non-linear solver (IPOPT in this implementation) varies the design variables, to find the least cost (minimise) of defined equations (such as actual speed vs desired speed, or actual position vs predicted position etc), with the design variables being constrained within certain bounds.
