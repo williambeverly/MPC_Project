@@ -1,7 +1,7 @@
 # Model Predictive Control
 ## Term 2: Project 5 - Udacity Self-driving car nanodegree
 
-![Alt text](Images/Display.png)
+![Alt text](Images/Image.png)
 
 ## Project description
 
