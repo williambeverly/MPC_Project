@@ -1,5 +1,11 @@
 # Model Predictive Control
-## Udacity Self-driving car nanodegree - Term 2: Project 5
+## Term 2: Project 5 - Udacity Self-driving car nanodegree
+
+## Project description
+
+The project implements a Model Predictive Controller (MPC) to guide a vehicle around a track - which is achieved in a simulator. At each simulator time step, the simulator provides the vehicle position, speed and heading to the MPC controller. Within the MPC, a kinematic model of the vehicle utilises the provided parameters as states, that are dependent on actuators (such as acceleration and steering angle), to predict the future states that are within a prediction horizon. In essence, the states and actuators are classed as design variables, and a non-linear solver (IPOPT in this implementation) varies the design variables, to find the least cost (minimise) of defined equations (such as actual speed vs desired speed, or actual position vs predicted position etc), with the design variables being constrained within certain bounds.
+
+## Usage
 
 A script titled `ez-build.sh` is included in the repository for compilation and testing. Alternatively, the user may enter the following commands:
 * `mkdir build && cd build`
@@ -20,16 +26,15 @@ Response: In this model, the kinematic model of the vehicle is utilised. Therefo
 
 In terms of the actuators, there are essentially 3 actuators - however the throttle and break are treated as a single actuator, with the positive and negative value indicating acceleration and deceleration respectively `acc` , and the other actuator is the steering angle `delta`.
 
-The update equations allow for the state and actuators at time=t, to predict the state of the vehicle at the next time=(t+1). The general update equations are found in `FG_eval` class in `MPC.cpp` lines , and the core update equations are as follows:
+The update equations allow for the state and actuators at time=t, to predict the state of the vehicle at the next time=(t+1). In addition, the cross-track error `cte` and orientation error `epsi` are also included in the update step. The general update equations are found in `FG_eval` class in `MPC.cpp` lines , and the core update equations are as follows:
 * `px(t+1) = px(t) + v(t) * cos(psi(t)) * dt`
 * `py(t+1) = py(t) + v(t) * sin(psi(t)) * dt`
 * `psi(t+1) = psi + v / Lf * delta * dt`
 * `v(t+1) =  v(t) + acc(t) * dt`
+* `cte(t+1) = cte(t) + v(t) * sin(desired_psi(t) * dt`
+* `desired_psi(t+1) = desired_psi(t) + v(t) / Lf * delta * dt`
 
 where Lf is the distance between the front of the vehicle and its centre of gravity.
-
-In addition, the cross-track error and the actual trajectory are included in the update step, and modelled as follows:
-
 
 * Criteria: Timestep length `N` and elapsed duration `dt`, and the reasoning behind the variable choices should be discussed, as well as previous attempted values.
 Response: Without any latency considerations, I could set `dt` = 0.05s and `N` = 20, and achieve good results for a speed of 60mph. However, introducing latency resulted in having to increase `dt` to 0.15s and decrease `N` to 8 - I also had to reduce the reference speed to 35mph, to avoid oscillations - even when considering the update to the state equations to include latency.
